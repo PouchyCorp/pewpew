@@ -26,9 +26,9 @@ class Button:
     def draw(self, win : pg.Surface):
         # Changes the sprite if the button is hovered
         if self.selected:
-            self.surf = self.surf_active if self.surf_active else self.surf
+            self.surf = self.surf_active
         else:
-            self.surf = self.surf_inactive if self.surf_inactive else self.surf
+            self.surf = self.surf_inactive
             
         # Blit the text.
         win.blit(self.surf, self.rect)
@@ -194,7 +194,7 @@ def main():
             action = "idle"
             choice_made = False
         
-        screen.blit(font.render(f"max {max_time_incr}, incr {int(time_incr)}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
+        screen.blit(font.render(f"max {max_time_incr}, incr {button_shoot.selected}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
 
         pg.display.flip()  
         time_incr -= 1/60

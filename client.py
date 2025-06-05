@@ -2,7 +2,7 @@ import pygame as pg
 import socket
 
 IP = "zola-info-02"
-PORT = 55555
+PORT = 5555
 
 class Button:
     def __init__(self, coord : tuple, effect, surf_active = None, surf_inactive = None, param : list = None):
@@ -105,56 +105,48 @@ def main():
     max_time_incr = 6
     time_incr = max_time_incr
 
-    bullet_changed_this_round = False
+    choice_made = False
 
     while game_over_status == 0:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 raise SystemExit
-            
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:  # Space to "pew"
-                    if not bullet_changed_this_round:
+            if not choice_made:
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_SPACE:  # Space to "pew"
                         if bullets > 0:
                             action = "pew"
                             bullets -= 1
-                            bullet_changed_this_round = True
                         else:
                             action = "clic"  # No bullets to shoot
-                    else:
-                        action = "pew" if bullets > 0 else "clic"
-                elif event.key == pg.K_r:  # R to reload
-                    if not bullet_changed_this_round:
+                        choice_made = True
+                    elif event.key == pg.K_r:  # R to reload
                         action = "reload"
                         bullets += 1
-                        bullet_changed_this_round = True
+                        choice_made = True
+                    elif event.key == pg.K_d:  # D to dodge
+                        action = "dodge"
+                        choice_made = True
                     else:
-                        action = "reload"
-                elif event.key == pg.K_d:  # D to dodge
-                    action = "dodge"
-                else:
-                    action = "idle"
-            
-            if button_block.handle_event(event):
-                action = 'dodge'
-            if button_reload.handle_event(event):
-                if not bullet_changed_this_round:
+                        action = "idle"
+                
+                if button_block.handle_event(event):
+                    action = 'dodge'
+                    choice_made = True
+                if button_reload.handle_event(event):
                     action = 'reload'
                     bullets += 1
                     bullet_changed_this_round = True
-                else:
-                    action = 'reload'
-            if button_shoot.handle_event(event):
-                if not bullet_changed_this_round:
+                    choice_made = True
+                if button_shoot.handle_event(event):
                     if bullets > 0:
                         action = "pew"
                         bullets -= 1
                         bullet_changed_this_round = True
                     else:
                         action = "clic"
-                else:
-                    action = "pew" if bullets > 0 else "clic"
+                    choice_made = True
 
             match action:
                 case "shoot":
@@ -200,7 +192,7 @@ def main():
             server.send(b' ')
 
             action = "idle"
-            bullet_changed_this_round = False
+            choice_made = False
         
         screen.blit(font.render(f"max {max_time_incr}, incr {int(time_incr)}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
 

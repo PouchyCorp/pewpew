@@ -67,10 +67,14 @@ def main():
 
     client = wait_connection(HOST, PORT)
 
+    
     pg.init()
 
-    screen = pg.display.set_mode((1920, 1080))
+    screen = pg.display.set_mode((0,0), pg.FULLSCREEN)
+    font = pg.font.SysFont('Arial', 20)
+    clock = pg.time.Clock()
 
+    # Load images into a dictionary
     images = {
         "tir1": pg.image.load("tir 1.png").convert_alpha(),
         "tir2": pg.image.load("tir 2.png").convert_alpha(),
@@ -89,69 +93,60 @@ def main():
         "button_reload_hover": pg.image.load("bouton3_hover.png").convert_alpha(),
     }
 
-    font = pg.font.SysFont('Arial', 20)
-    clock = pg.time.Clock()
-
     button_shoot = Button((250, 880), int, images["button_shoot_hover"], images["button_shoot"])
-    button_block = Button((990, 880), int, images["button_block_hover"], images["button_block"])
+    button_block= Button((990, 880), int, images["button_block_hover"], images["button_block"])
     button_reload = Button((615, 880), int, images["button_reload_hover"], images["button_reload"])
+    
+
+    bullets = 0  
+    action = 'idle'  # Possible actions: pew, reload, dodge, idle
+    game_over_status = 0
 
     max_time_incr = 6
     time_incr = max_time_incr
-    bullets = 0
-    action = 'idle' #pew, reload, dodge, idle, clic
-    game_over_status = 0
 
-    bullet_changed_this_round = False
+    choice_made = False
 
     while game_over_status == 0:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 raise SystemExit
-            
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:  # Space to "pew"
-                    if not bullet_changed_this_round:
+            if not choice_made:
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_SPACE:  # Space to "pew"
                         if bullets > 0:
                             action = "pew"
                             bullets -= 1
-                            bullet_changed_this_round = True
                         else:
                             action = "clic"  # No bullets to shoot
-                    else:
-                        action = "pew" if bullets > 0 else "clic"
-                elif event.key == pg.K_r:  # R to reload
-                    if not bullet_changed_this_round:
+                        choice_made = True
+                    elif event.key == pg.K_r:  # R to reload
                         action = "reload"
                         bullets += 1
-                        bullet_changed_this_round = True
+                        choice_made = True
+                    elif event.key == pg.K_d:  # D to dodge
+                        action = "dodge"
+                        choice_made = True
                     else:
-                        action = "reload"
-                elif event.key == pg.K_d:  # D to dodge
-                    action = "dodge"
-                else:
-                    action = "idle"
-
-            if button_block.handle_event(event):
-                action = 'dodge'
-            if button_reload.handle_event(event):
-                if not bullet_changed_this_round:
+                        action = "idle"
+                
+                if button_block.handle_event(event):
+                    action = 'dodge'
+                    choice_made = True
+                if button_reload.handle_event(event):
                     action = 'reload'
                     bullets += 1
                     bullet_changed_this_round = True
-                else:
-                    action = 'reload'
-            if button_shoot.handle_event(event):
-                if not bullet_changed_this_round:
+                    choice_made = True
+                if button_shoot.handle_event(event):
                     if bullets > 0:
                         action = "pew"
                         bullets -= 1
                         bullet_changed_this_round = True
                     else:
                         action = "clic"
-                else:
-                    action = "pew" if bullets > 0 else "clic"
+                    choice_made = True
 
             match action:
                 case "shoot":

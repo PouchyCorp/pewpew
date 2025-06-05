@@ -70,7 +70,7 @@ def main():
 
     pg.init()
 
-    screen = pg.display.set_mode((1920, 1080))
+    screen = pg.display.set_mode((0,0))
     font = pg.font.SysFont('Arial', 20)
     clock = pg.time.Clock()
 

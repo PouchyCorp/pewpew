@@ -1,8 +1,32 @@
-import pygame
+import pygame as pg
 import socket
 
 HOST = "127.0.0.1"
 PORT = 5555
+
+class Button:
+    def __init__(self, coord : tuple, effect, surf_active = None, surf_inactive = None, param : list = None):
+        assert surf_active or surf_inactive, "initalize at least one of the two surface attributes"
+        self.surf_active = surf_active
+        self.surf_inactive = surf_inactive
+        self.surf : pg.Surface = surf_inactive if surf_inactive else surf_active
+        self.rect : pg.Rect = self.surf.get_rect(topleft=coord)
+        self.selected = False
+        self.param = param if param else []
+
+    def handle_event(self, event):
+        """Manage the events"""
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                return True
+        return False
+
+    def draw(self, win : pg.Surface):
+        if self.selected:
+            self.surf = self.surf_active if self.surf_active else self.surf
+        else:
+            self.surf = self.surf_inactive if self.surf_inactive else self.surf
+        win.blit(self.surf, self.rect)
 
 def wait_connection(host_ip, port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,78 +37,189 @@ def wait_connection(host_ip, port):
     print(f"Le client s'est connecté.")
     return client_socket
 
+def draw_round_event(action, opponent_action, screen : pg.Surface, images):
+    screen.blit(images["background"], (0,0))
+
+    # Show server player's action
+    if action == "pew":
+        screen.blit(images["tir1"], (0,0))
+    elif action == "reload":
+        screen.blit(images["recharg1"], (0,0))
+    elif action == "dodge":
+        screen.blit(images["dodge1"], (0,0))
+    else:
+        screen.blit(images["idle1"], (0,0))
+
+    # Show opponent's action
+    if opponent_action == "pew":
+        screen.blit(images["tir2"], (0,0))
+    elif opponent_action == "reload":
+        screen.blit(images["recharg2"], (0,0))
+    elif opponent_action == "dodge":
+        screen.blit(images["dodge2"], (0,0))
+    else:
+        screen.blit(images["idle2"], (0,0))
+
+    pg.display.flip()
+    pg.time.wait(2000)
+    
 def main():
 
     client = wait_connection(HOST, PORT)
 
     pg.init()
 
-    screen = pg.display.set_mode((1280,720))
+    screen = pg.display.set_mode((1920, 1080))
 
+    images = {
+        "tir1": pg.image.load("tir 1.png").convert_alpha(),
+        "tir2": pg.image.load("tir 2.png").convert_alpha(),
+        "recharg1": pg.image.load("recharg 1.png").convert_alpha(),
+        "recharg2": pg.image.load("recharg 2.png").convert_alpha(),
+        "idle1": pg.image.load("idle 1.png").convert_alpha(),
+        "idle2": pg.image.load("idle 2.png").convert_alpha(),
+        "dodge1": pg.image.load("dodge 1.png").convert_alpha(),
+        "dodge2": pg.image.load("dodge 2.png").convert_alpha(),
+        "background": pg.image.load("background.png").convert_alpha(),
+        "button_shoot": pg.image.load("bouton1.png").convert_alpha(),
+        "button_shoot_hover": pg.image.load("bouton1_hover.png").convert_alpha(),
+        "button_block": pg.image.load("bouton2.png").convert_alpha(),
+        "button_block_hover": pg.image.load("bouton2_hover.png").convert_alpha(),
+        "button_reload": pg.image.load("bouton3.png").convert_alpha(),
+        "button_reload_hover": pg.image.load("bouton3_hover.png").convert_alpha(),
+    }
+
+    font = pg.font.SysFont('Arial', 20)
     clock = pg.time.Clock()
 
+    button_shoot = Button((250, 880), int, images["button_shoot_hover"], images["button_shoot"])
+    button_block = Button((990, 880), int, images["button_block_hover"], images["button_block"])
+    button_reload = Button((615, 880), int, images["button_reload_hover"], images["button_reload"])
 
     max_time_incr = 6
-
     time_incr = max_time_incr
-
     bullets = 0
-
     action = 'idle' #pew, reload, dodge, idle, clic
-
     game_over_status = 0
+
+    bullet_changed_this_round = False
 
     while game_over_status == 0:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 raise SystemExit
+            
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:  # Space to "pew"
+                    if not bullet_changed_this_round:
+                        if bullets > 0:
+                            action = "pew"
+                            bullets -= 1
+                            bullet_changed_this_round = True
+                        else:
+                            action = "clic"  # No bullets to shoot
+                    else:
+                        action = "pew" if bullets > 0 else "clic"
+                elif event.key == pg.K_r:  # R to reload
+                    if not bullet_changed_this_round:
+                        action = "reload"
+                        bullets += 1
+                        bullet_changed_this_round = True
+                    else:
+                        action = "reload"
+                elif event.key == pg.K_d:  # D to dodge
+                    action = "dodge"
+                else:
+                    action = "idle"
 
-        screen.fill("purple")
+            if button_block.handle_event(event):
+                action = 'dodge'
+            if button_reload.handle_event(event):
+                if not bullet_changed_this_round:
+                    action = 'reload'
+                    bullets += 1
+                    bullet_changed_this_round = True
+                else:
+                    action = 'reload'
+            if button_shoot.handle_event(event):
+                if not bullet_changed_this_round:
+                    if bullets > 0:
+                        action = "pew"
+                        bullets -= 1
+                        bullet_changed_this_round = True
+                    else:
+                        action = "clic"
+                else:
+                    action = "pew" if bullets > 0 else "clic"
 
+            match action:
+                case "shoot":
+                    button_shoot.selected = True
+                    button_reload.selected = False
+                    button_block.selected = False
+                case "reload":
+                    button_shoot.selected = False
+                    button_reload.selected = True
+                    button_block.selected = False
+                case "block":
+                    button_shoot.selected = False
+                    button_reload.selected = False
+                    button_block.selected = True
+                case _:
+                    button_shoot.selected = False
+                    button_reload.selected = False
+                    button_block.selected = False
+
+        screen.blit(images["background"], (0,0))
+        screen.blit(images["idle1"], (0,0))
+        screen.blit(images["idle2"], (0,0))
+        button_shoot.draw(screen)
+        button_block.draw(screen)
+        button_reload.draw(screen)
 
         if time_incr <= 0:
-            if action == "reload":
-                bullets += 1
-            
-            elif action == "pew" and bullet <= 0:
-                action = "clic"
-            
-            elif action == "pew" and bullet > 0:
-                bullet -= 1
 
             client.send(action.encode())
 
+            client.recv(1) # confirmation
+
             opponent_action = client.recv(60).decode()
 
-            if opponent_action == "pew" and action in ("idle", "reload"):
+            client.send(b' ') # confirmation
+
+            print(f"Opponent action: {opponent_action}")
+
+            if opponent_action == "pew" and action in ("idle", "reload", "clic"):
                 game_over_status = 1
             
-            elif action == "pew" and opponent_action in ("idle", "reload"):
+            elif action == "pew" and opponent_action in ("idle", "reload", "clic"):
                 game_over_status = 2
 
-            elif opponent_action == "pew" and action == "pew":
-                pass
-                # TODO special interaction
+            draw_round_event(action, opponent_action, screen, images)
 
-
-            # TODO make while loop to draw results for two sec
-            
-            
-
-            max_time_incr -= max_time_incr/1.1
+            max_time_incr = max_time_incr*0.9
+            time_incr = max_time_incr
+            print(time_incr)
             client.send(str(max_time_incr).encode())
+
+            client.recv(1) # confirmation
+
             client.send(str(game_over_status).encode())
 
+            client.recv(1) # confirmation
+
+            action = "idle"
+            bullet_changed_this_round = False
+
+        screen.blit(font.render(f"max {max_time_incr}, incr {int(time_incr)}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
         pg.display.flip()  
         clock.tick(60)
         time_incr -= 1/60
 
     if game_over_status == 1:
         print("you lost ...")
-    
     else:
         print("you win !!")
         
-
 main()

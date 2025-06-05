@@ -1,8 +1,8 @@
 import pygame as pg
 import socket
 
-IP = "127.0.0.1"
-PORT = 5555
+IP = "zola-info-02"
+PORT = 55555
 
 class Button:
     def __init__(self, coord : tuple, effect, surf_active = None, surf_inactive = None, param : list = None):
@@ -70,7 +70,7 @@ def main():
 
     pg.init()
 
-    screen = pg.display.set_mode((0,0))
+    screen = pg.display.set_mode((0,0), pg.FULLSCREEN)
     font = pg.font.SysFont('Arial', 20)
     clock = pg.time.Clock()
 

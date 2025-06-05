@@ -205,7 +205,7 @@ def main():
             client.recv(1) # confirmation
 
             action = "idle"
-            bullet_changed_this_round = False
+            choice_made = False
 
         screen.blit(font.render(f"max {max_time_incr}, incr {int(time_incr)}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
         pg.display.flip()  

@@ -137,19 +137,19 @@ def main():
                 if button_reload.handle_event(event):
                     action = 'reload'
                     bullets += 1
-                    bullet_changed_this_round = True
+                    
                     choice_made = True
                 if button_shoot.handle_event(event):
                     if bullets > 0:
                         action = "pew"
                         bullets -= 1
-                        bullet_changed_this_round = True
+                        
                     else:
                         action = "clic"
                     choice_made = True
 
             match action:
-                case "shoot":
+                case "pew" | "clic":
                     button_shoot.selected = True
                     button_reload.selected = False
                     button_block.selected = False
@@ -157,7 +157,7 @@ def main():
                     button_shoot.selected = False
                     button_reload.selected = True
                     button_block.selected = False
-                case "block":
+                case "dodge":
                     button_shoot.selected = False
                     button_reload.selected = False
                     button_block.selected = True

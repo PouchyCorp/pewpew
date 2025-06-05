@@ -71,7 +71,7 @@ def main():
     pg.init()
 
     screen = pg.display.set_mode((0,0), pg.FULLSCREEN)
-    font = pg.font.SysFont('Arial', 20)
+    font = pg.font.SysFont('Comic Sans', 50)
     clock = pg.time.Clock()
 
     # Load images into a dictionary
@@ -207,7 +207,8 @@ def main():
             action = "idle"
             choice_made = False
 
-        screen.blit(font.render(f"max {max_time_incr}, incr {int(time_incr)}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
+        screen.blit(font.render(f"bullets : {bullets}", False, "#614750"), (0,0))
+        #screen.blit(font.render(f"max {max_time_incr}, incr {int(time_incr)}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
         pg.display.flip()  
         clock.tick(60)
         time_incr -= 1/60

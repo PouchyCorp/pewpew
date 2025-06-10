@@ -28,6 +28,16 @@ class Button:
             self.surf = self.surf_inactive if self.surf_inactive else self.surf
         win.blit(self.surf, self.rect)
 
+def draw_progress(screen : pg.Surface, current_incr, max_incr, rope_surf : pg.Surface, fire_surf : pg.Surface):
+    #cross product
+    rope_surf_width = screen.get_width()
+    active_rope_x = (current_incr * rope_surf_width) / max_incr
+
+
+    screen.blit(rope_surf, (0,50), (0,0,active_rope_x,300))
+    screen.blit(fire_surf, (active_rope_x,50))
+
+
 def wait_connection(host_ip, port):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host_ip, port))
@@ -60,6 +70,9 @@ def draw_round_event(action, opponent_action, screen : pg.Surface, images):
     else:
         screen.blit(images["idle2"], (0,0))
 
+    if action == 'pew' and opponent_action == 'pew':
+        screen.blit(images['pewpew'], (0,0))
+
     pg.display.flip()
     pg.time.wait(2000)
     
@@ -91,11 +104,14 @@ def main():
         "button_block_hover": pg.image.load("bouton2_hover.png").convert_alpha(),
         "button_reload": pg.image.load("bouton3.png").convert_alpha(),
         "button_reload_hover": pg.image.load("bouton3_hover.png").convert_alpha(),
+        'pewpew' : pg.image.load("pewpews.png").convert_alpha(),
+        'rope' : pg.image.load("meche.png").convert_alpha(),
+        'fire' : pg.image.load("feu.png").convert_alpha()
     }
 
     button_shoot = Button((250, 880), int, images["button_shoot_hover"], images["button_shoot"])
-    button_block= Button((990, 880), int, images["button_block_hover"], images["button_block"])
-    button_reload = Button((615, 880), int, images["button_reload_hover"], images["button_reload"])
+    button_block= Button((615, 880), int, images["button_block_hover"], images["button_block"])
+    button_reload = Button((990, 880), int, images["button_reload_hover"], images["button_reload"])
     
 
     bullets = 0  
@@ -209,6 +225,8 @@ def main():
 
         screen.blit(font.render(f"bullets : {bullets}", True, "#614750"), (0,0))
         #screen.blit(font.render(f"max {max_time_incr}, incr {int(time_incr)}, action {action}, fps {int(clock.get_fps())}", False, "white"), (0,0))
+        draw_progress(screen, time_incr, max_time_incr, images['rope'], images[("fire")])
+        
         pg.display.flip()  
         clock.tick(60)
         time_incr -= 1/60

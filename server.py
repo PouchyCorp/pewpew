@@ -43,6 +43,7 @@ def wait_connection(host_ip, port):
     server.bind((host_ip, port))
     server.listen()
     print(f"Le serveur écoute en {host_ip} avec sur le port : {port}")
+    print(socket.gethostname())
     client_socket, addr = server.accept()
     print(f"Le client s'est connecté.")
     return client_socket
